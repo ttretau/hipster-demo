@@ -1,2 +1,2 @@
 # hipster-demo
-demo JHipster with polymer
+Demo JHipster with polymer
