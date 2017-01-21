@@ -1,0 +1,116 @@
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
+
+<dom-module id="hipster-signin">
+    <template>
+        <paper-dialog id="loginDialog">
+            <h2>Sign In</h2>
+
+            <form is="iron-form" id="loginForm" method="post" action="http://localhost:8080/api/authenticate" content-type="application/json">
+                <input type=hidden name=csrfmiddlewaretoken value="{{ csrfToken }}">
+                <paper-input name="username" label="Username" required></paper-input>
+                <paper-input name="password" label="Password" required type="password"></paper-input>
+                <paper-checkbox name="remember" on-change="_toggleRemember">Remember me</paper-checkbox><br>
+                <br>
+                <paper-button raised class=submit>Login</paper-button>
+                <paper-button raised class=signup>Create an account</paper-button>
+                <button style="display:none"></button>
+                <br>
+            </form>
+                            <div>{{lastError}}</div>
+
+        </paper-dialog>
+        <app-localstorage-document id="storage" log key="jwt" data="{{token}}" session-only="[[remember]]"></app-localstorage-document>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'hipster-signin',
+
+            properties: {
+                csrfToken: String,
+                remember: {
+                    type: Object,
+                    value: false,
+                    reflectToAttribute: true,
+                    notify: true,
+                },
+                token: {
+                    type: String,
+                    value: '',
+                    observer: 'changeToken',
+                    notify: true
+                },
+                user: {
+                    type: Object,
+                    value: {
+                        isLogged: false,
+                        username: null
+                    }
+                },
+                opened: {
+                    type: Boolean,
+                    reflectToAttribute: true,
+                    notify: true,
+                    observer: '_toggleDialog'
+                },
+                signedIn: Boolean,
+                error: String
+                //TODO computed property signedIn
+            },
+            listeners: {
+                'iron-form-error': '_handleError'
+            },
+            changeToken: function(token) {
+                var self = this;
+                //this.$.storage.setStoredValue('jwt', token);
+                /*$.ajax({
+                    url: '/rest-auth/user/',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {'token': token},
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Token ' + token);
+                    },
+                    success: function(response){
+                        self.set('user.username', response.username);
+                        self.set('user.isLogged', true);
+                        self.$.loginDialog.close();
+                    }
+                });*/
+            },
+
+            ready: function(){
+                var self = this;
+
+                // login form
+                var form = this.$.loginForm;
+
+
+
+                form.querySelector('.submit').addEventListener('click', function(){
+                    form.submit();
+                });
+
+                form.addEventListener('iron-form-response', function(evt) {
+                    self.token = evt.detail.response.id_token;
+                    self.opened = false;
+                });
+            },
+            _handleError: function(event){
+                    //console.log('BLUB login error ' + JSON.stringify(event.detail));
+                                        self.error = event.detail.message;
+            },
+            _toggleDialog: function(){
+                this.$.loginDialog.toggle();
+            },
+            _toggleRemember: function() {
+                self.remember = !self.remember;
+            }
+        });
+    </script>
+</dom-module>

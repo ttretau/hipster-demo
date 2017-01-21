@@ -1,0 +1,78 @@
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
+
+<dom-module id="iron-ajax-jwt">
+  <template>
+    <style>
+      :host {
+        display: none;
+      }
+    </style>
+    <app-localstorage-document log key="jwt" data="{{token}}"></app-localstorage-document>
+
+    <iron-ajax id="ajax" url="{{url}}" headers="{{headers}}" handle-as="json" auto="{{auto}}" method="{{method}}"
+               last-error="{{lastError}}" bubbles="{{bubbles}}"
+               last-response="{{lastResponse}}" body="{{body}}" content-type="{{contentType}}"></iron-ajax>
+  </template>
+  <script>
+    Polymer({
+      is: 'iron-ajax-jwt',
+      properties: {
+        token: {
+          type: String,
+          notify: true,
+          observer: '_tokenUpdated'
+        },
+        url: String,
+        method: String,
+        auto: Boolean,
+        body: String,
+        bubbles: Boolean,
+        contentType: String,
+        lastError: Object,
+        headers: {
+          type: Object,
+          notify: true,
+          computed: '_getHeader(token)'
+        },
+        lastResponse: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      listeners: {
+        'response': '_handleResponse',        
+        'on-error': '_error'
+      },
+
+      go: function() {
+        this.$.ajax.generateRequest();
+      },
+
+      _tokenUpdated: function(){
+        if(this.token){
+          this.go();
+        }
+      },
+
+      _handleResponse: function(request) {
+        this.fire('iron-ajax-jwt-response', request);
+      },
+
+      _getHeader: function(token) {
+        return {'Authorization': 'Bearer ' + token};
+      },
+
+      _error: function(evt) {
+        var status = evt.details.xhr.status;
+        console.log('Received error ' + status);
+        // token invalid
+        if (status === 401 || status === 403) {
+          this.token = '';
+        }
+      }
+
+    });
+  </script>
+</dom-module>

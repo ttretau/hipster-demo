@@ -1,0 +1,80 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="iron-ajax-jwt.html">
+<link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+
+
+<dom-module id="my-locationlist">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+
+        padding: 10px;
+      }
+      
+      .add-button {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+      }
+    </style>
+
+    <iron-ajax-jwt id="ironAjax" url="http://localhost:8080/api/locations" last-response="{{data}}"></iron-ajax-jwt>
+    <vaadin-grid id="locations" items="{{data}}" frozen-columns="1" on-selected-items-changed="_editLocation">
+      <table>
+        <colgroup>
+          <col name="id">
+          <col name="streetAddress">
+          <col name="postalCode">
+          <col name="city">
+          <col name="stateProvince">
+        </colgroup>
+      </table>
+    </vaadin-grid>
+    <paper-fab icon="icons:add" on-tap="_addLocation" class="add-button"></paper-fab>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-locationlist',
+      properties: {
+        locations: Array,
+        editorOpen: {
+          type: Boolean, 
+          value: false
+        },
+        location: {
+            type: Object,
+            notify: true,
+            value: {}
+        },
+      },   
+      ready: function() {
+        var grid = this.$.locations;
+      },
+      _addLocation: function() {
+        this.fire('edit-location', {});
+      },
+      _editLocation: function(){
+        var _this = this;
+        var grid = this.$.locations;
+        var selection = grid.selection.selected();
+        if (selection.length === 1) {
+          grid.getItem(selection[0], function(err, item) {
+            _this.fire('edit-location', item);
+            //_this.location = item;
+          });
+        }
+        //this.$.dialog.opened = !this.editorOpen;
+      },
+      _locationsUpdated: function(event) {
+        console.log('BLUB updated');
+        var ironAjax = this.$.ironAjax;
+        ironAjax.go();
+      }
+
+    });
+  </script>
+</dom-module>
